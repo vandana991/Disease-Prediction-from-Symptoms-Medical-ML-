@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedPredict AI - Disease Prediction from Symptoms</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-wrapper">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <img src="{{ url_for('static', filename='apexium_logo.png') }}" alt="Apexium Logo" class="apexium-logo-img">
+                </div>
+                <div class="logo-text">
+                    <h1>MedPredict<span>AI</span></h1>
+                    <p class="subtitle">Clinical Symptoms Analytics</p>
+                </div>
+            </div>
+            <div class="status-indicator">
+                {% if model_status %}
+                    <span class="status-badge status-online">
+                        <span class="pulse-dot"></span>
+                        AI Engine Online
+                    </span>
+                {% else %}
+                    <span class="status-badge status-offline">
+                        <span class="static-dot"></span>
+                        AI Engine Offline
+                    </span>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="app-main">
+            <!-- Left Panel: Inputs -->
+            <section class="panel panel-inputs">
+                <div class="panel-header">
+                    <span class="step-num">01</span>
+                    <h2>Symptom Assessment</h2>
+                    <p class="panel-desc">Describe your symptoms in detail, including when they started, severity, and any related symptoms. Example: "I have had a headache, fever, and fatigue for the last 3 days."</p>
+                </div>
+
+                <!-- Symptom Description Textarea -->
+                <div class="symptom-description-container">
+                    <label for="symptom-description" class="field-label">Describe your symptoms</label>
+                    <textarea id="symptom-description" class="symptom-textarea" placeholder="e.g. I have had a headache, fever, and fatigue for the last 3 days." rows="6"></textarea>
+                    <p class="helper-text">Our AI will extract key symptoms from your description.</p>
+                </div>
+
+                <!-- Action Button -->
+                <div class="action-container">
+                    <button type="button" id="analyze-btn" class="btn btn-primary" disabled>
+                        <span class="btn-text">Analyze Symptoms</span>
+                        <div class="btn-loader" style="display: none;">
+                            <span class="spinner"></span>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Results -->
+            <section class="panel panel-results">
+                <!-- Status Badge for Steps -->
+                <div class="panel-header">
+                    <span class="step-num">02</span>
+                    <h2>Diagnostic Insights</h2>
+                    <p class="panel-desc">Machine learning prediction details, confidence levels, descriptions, and recommended precautions.</p>
+                </div>
+
+                <!-- Result Container -->
+                <div id="results-display-wrapper" class="results-display-wrapper">
+                    <!-- State 1: Awaiting Input (Default) -->
+                    <div id="result-state-awaiting" class="result-state-card active">
+                        <div class="pulse-icon-container">
+                            <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" class="beating-heart">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </div>
+                        <h3>Awaiting Symptom Analysis</h3>
+                        <p>Describe your symptoms in the text area and click the "Analyze Symptoms" button. The AI model will evaluate inputs against 40+ disease classifications.</p>
+                    </div>
+
+                    <!-- State 2: Loading Skeleton -->
+                    <div id="result-state-loading" class="result-state-card" style="display: none;">
+                        <div class="skeleton-header">
+                            <div class="skeleton-circle"></div>
+                            <div class="skeleton-lines">
+                                <div class="skeleton-line skeleton-title"></div>
+                                <div class="skeleton-line skeleton-subtitle"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton-body">
+                            <div class="skeleton-line full"></div>
+                            <div class="skeleton-line three-quarters"></div>
+                            <div class="skeleton-line half"></div>
+                        </div>
+                        <div class="skeleton-list">
+                            <div class="skeleton-list-item"></div>
+                            <div class="skeleton-list-item"></div>
+                            <div class="skeleton-list-item"></div>
+                        </div>
+                    </div>
+
+                    <!-- State 3: Analysis Results Loaded -->
+                    <div id="result-state-loaded" class="result-state-card" style="display: none;">
+                        <!-- Primary Diagnosis Card -->
+                        <div class="primary-diagnosis-card">
+                            <div class="diagnosis-meta">
+                                <span class="badge-accent">Primary Prediction</span>
+                                <h3 id="predicted-disease-title">Fungal infection</h3>
+                            </div>
+                            
+                            <!-- Confidence Meter -->
+                            <div class="confidence-container">
+                                <div class="confidence-circle-wrapper">
+                                    <svg viewBox="0 0 100 100" class="progress-ring">
+                                        <circle class="progress-ring-bg" cx="50" cy="50" r="40" stroke-width="8" fill="transparent"/>
+                                        <circle id="confidence-progress" class="progress-ring-bar" cx="50" cy="50" r="40" stroke-width="8" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="0"/>
+                                    </svg>
+                                    <div class="confidence-value-wrapper">
+                                        <span id="confidence-percentage">94%</span>
+                                        <span class="label">Confidence</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description Card -->
+                        <div class="info-card description-card">
+                            <div class="info-card-header">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="card-icon">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                                <h4>Condition Overview</h4>
+                            </div>
+                            <p id="disease-description">Fungal infection is a common skin condition caused by a fungus. Symptoms include red, scaly, and itchy skin patches.</p>
+                        </div>
+
+                        <!-- Clinical Factors Card -->
+                        <div class="info-card clinical-factors-card" id="clinical-factors-card" style="display: none;">
+                            <div class="info-card-header">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="card-icon">
+                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                </svg>
+                                <h4>Clinical Factors Analyzed</h4>
+                            </div>
+                            <div id="urgent-warning" class="urgent-warning-banner" style="display: none; background: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: 600; font-size: 14px;">
+                                ⚠️ Urgent Medical Attention Recommended
+                            </div>
+                            <ul class="factors-list" style="list-style: none; padding: 0; margin: 0; font-size: 14px;">
+                                <li style="margin-bottom: 8px;"><strong>Duration:</strong> <span id="factor-duration">None identified</span></li>
+                                <li style="margin-bottom: 8px;"><strong>Triggers:</strong> <span id="factor-triggers">None identified</span></li>
+                                <li style="margin-bottom: 8px;"><strong>Severity:</strong> <span id="factor-severity">None identified</span></li>
+                                <li><strong>Age/Gender Factors:</strong> <span id="factor-age">None identified</span></li>
+                            </ul>
+                        </div>
+
+                        <!-- Precautions Checklist -->
+                        <div class="info-card precaution-card">
+                            <div class="info-card-header">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="card-icon icon-shield">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                </svg>
+                                <h4>Recommended Precautions</h4>
+                            </div>
+                            <p class="precaution-sub">Please review and mark these precautionary steps as completed:</p>
+                            <ul id="precautions-list" class="precaution-checklist">
+                                <!-- Populated dynamically -->
+                            </ul>
+                        </div>
+
+                        <!-- Top 3 Probability Breakdown -->
+                        <div class="info-card alternatives-card">
+                            <div class="info-card-header">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="card-icon">
+                                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                                </svg>
+                                <h4>Statistical Match Ranking</h4>
+                            </div>
+                            <p class="alternatives-sub">Top 3 probable conditions identified by the Random Forest probability vector:</p>
+                            <div id="alternatives-ranking-list" class="alternatives-ranking-list">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Disclaimer Banner -->
+                        <div class="disclaimer-banner">
+                            <div class="disclaimer-header">
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                                <h5>Educational Prototype Disclaimer</h5>
+                            </div>
+                            <p>This web application is powered by a machine learning model trained on a public dataset. It is designed solely for demonstration, educational, and prototyping purposes. It does not provide medical diagnoses, treatment recommendations, or clinical advice. Always consult a qualified medical professional for health concerns.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer-bar">
+            <p>&copy; 2026 MedPredict AI. Developed by Apexium.</p>
+        </footer>
+    </div>
+
+    <!-- Data Injection for Javascript -->
+    <script id="symptoms-data" type="application/json">
+        {{ symptoms | tojson | safe }}
+    </script>
+
+    <!-- Main Application Script -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
