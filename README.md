@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # MedPredict AI: Disease Prediction from Symptoms
 
 MedPredict AI is a complete web application designed to predict potential medical conditions based on user-selected symptoms. It combines a robust machine learning backend trained on a standard clinical dataset using a **Random Forest Classifier** with a premium, responsive, and interactive frontend built using Vanilla HTML, CSS, and JavaScript.
